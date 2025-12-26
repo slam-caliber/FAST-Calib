@@ -1,5 +1,11 @@
 # FAST-Calib
 
+
+##  主要修改  
+1. 去除ros接口，只需读取pcd和image  
+2. 对没有ring字段的雷达，添加了从xyz->xyzr的函数
+3. 若按照雷达x朝前，相机z朝前布置的传感器，可先对雷达进行变换为x朝前再对圆孔进行排序  
+
 ## FAST-Calib: LiDAR-Camera Extrinsic Calibration in One Second
 
 FAST-Calib is an efficient target-based extrinsic calibration tool for LiDAR-camera systems (eg., [FAST-LIVO2](https://github.com/hku-mars/FAST-LIVO2)). 
