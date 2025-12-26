@@ -14,12 +14,6 @@ which is included as part of this source code package.
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/transforms.h>
-<<<<<<< HEAD
-#include <pcl_ros/point_cloud.h>
-#include <pcl_ros/filters/passthrough.h>
-#include <pcl_conversions/pcl_conversions.h>
-=======
->>>>>>> master
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/features/boundary.h>
 #include <pcl/features/normal_3d.h>
@@ -29,10 +23,6 @@ which is included as part of this source code package.
 #include <pcl/registration/transformation_estimation_svd.h>
 #include <cmath>
 #include <opencv2/opencv.hpp>
-<<<<<<< HEAD
-#include <tf/tf.h>
-#include "color.h"
-=======
 #include <Eigen/Geometry>
 #include <fstream>
 #include <iostream>
@@ -66,7 +56,6 @@ which is included as part of this source code package.
 #define BOLDMAGENTA "\033[1m\033[35m"
 #define BOLDCYAN    "\033[1m\033[36m"
 #define BOLDWHITE   "\033[1m\033[37m"
->>>>>>> master
 
 using namespace std;
 using namespace cv;
@@ -74,11 +63,7 @@ using namespace pcl;
 
 #define TARGET_NUM_CIRCLES 4
 #define DEBUG 1
-<<<<<<< HEAD
-#define GEOMETRY_TOLERANCE 0.08
-=======
 #define GEOMETRY_TOLERANCE 0.06
->>>>>>> master
 
 // ===== 自定义点类型：XYZ + ring =====
 namespace Common 
@@ -90,10 +75,6 @@ namespace Common
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   } EIGEN_ALIGN16;
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> master
 POINT_CLOUD_REGISTER_POINT_STRUCT(Common::Point,
   (float, x, x)
   (float, y, y)
@@ -104,53 +85,11 @@ POINT_CLOUD_REGISTER_POINT_STRUCT(Common::Point,
 // 参数结构体
 struct Params {
   double x_min, x_max, y_min, y_max, z_min, z_max;
-<<<<<<< HEAD
-  double fx, fy, cx, cy, k1, k2, p1, p2;
-=======
   double fx, fy, cx, cy, k1, k2, p1, p2, k3, k4, k5, k6;
->>>>>>> master
   double marker_size, delta_width_qr_center, delta_height_qr_center;
   double delta_width_circles, delta_height_circles, circle_radius;
   int min_detected_markers;
   string image_path;
-<<<<<<< HEAD
-  string bag_path;
-  string lidar_topic;
-  string output_path;
-};
-
-// 读取参数
-Params loadParameters(ros::NodeHandle &nh) {
-  Params params;
-  nh.param("fx", params.fx, 1215.31801774424);
-  nh.param("fy", params.fy, 1214.72961288138);
-  nh.param("cx", params.cx, 1047.86571859677);
-  nh.param("cy", params.cy, 745.068353101898);
-  nh.param("k1", params.k1, -0.33574781188503);
-  nh.param("k2", params.k2, 0.10996870793601);
-  nh.param("p1", params.p1, 0.000157303079833973);
-  nh.param("p2", params.p2, 0.000544930726278493);
-  nh.param("marker_size", params.marker_size, 0.2);
-  nh.param("delta_width_qr_center", params.delta_width_qr_center, 0.55);
-  nh.param("delta_height_qr_center", params.delta_height_qr_center, 0.35);
-  nh.param("delta_width_circles", params.delta_width_circles, 0.5);
-  nh.param("delta_height_circles", params.delta_height_circles, 0.4);
-  nh.param("min_detected_markers", params.min_detected_markers, 3);
-  nh.param("circle_radius", params.circle_radius, 0.12);
-  nh.param("image_path", params.image_path, string("/home/chunran/calib_ws/src/fast_calib/data/image.png"));
-  nh.param("bag_path", params.bag_path, string("/home/chunran/calib_ws/src/fast_calib/data/input.bag"));
-  nh.param("lidar_topic", params.lidar_topic, string("/livox/lidar"));
-  nh.param("output_path", params.output_path, string("/home/chunran/calib_ws/src/fast_calib/output"));
-  nh.param("x_min", params.x_min, 1.5);
-  nh.param("x_max", params.x_max, 3.0);
-  nh.param("y_min", params.y_min, -1.5);
-  nh.param("y_max", params.y_max, 2.0);
-  nh.param("z_min", params.z_min, -0.5);
-  nh.param("z_max", params.z_max, 2.0);
-  return params;
-}
-
-=======
   string pointcloud_path;  
   string output_path;
   bool use_mech_lidar;
@@ -495,7 +434,6 @@ pcl::PointCloud<Common::Point>::Ptr convertToCommonPointCloud(
 
 
 
->>>>>>> master
 double computeRMSE(const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud1, 
                    const pcl::PointCloud<pcl::PointXYZ>::Ptr& cloud2) 
 {
@@ -564,8 +502,6 @@ void comb(int N, int K, std::vector<std::vector<int>> &groups) {
   assert(groups.size() == n_permutations);
 }
 
-<<<<<<< HEAD
-=======
 
 void projectPointCloudToImage(const pcl::PointCloud<Common::Point>::Ptr& cloud,
                              const Eigen::Matrix4f& transformation,
@@ -652,7 +588,6 @@ void printCalibrationResult(const Eigen::Matrix4f& transformation, double rmse) 
               << rmse << std::endl;
 }
 
->>>>>>> master
 void projectPointCloudToImage(const pcl::PointCloud<Common::Point>::Ptr& cloud,
   const Eigen::Matrix4f& transformation,
   const cv::Mat& cameraMatrix,
@@ -722,13 +657,10 @@ void saveTargetHoleCenters(const pcl::PointCloud<pcl::PointXYZ>::Ptr& lidar_cent
     
     std::string saveDir = params.output_path;
     if (saveDir.back() != '/') saveDir += '/';
-<<<<<<< HEAD
-=======
     
     // 确保输出目录存在
     system(("mkdir -p " + saveDir).c_str());
     
->>>>>>> master
     std::ofstream saveFile(saveDir + "circle_center_record.txt", std::ios::app);
 
     if (!saveFile.is_open()) {
@@ -739,13 +671,9 @@ void saveTargetHoleCenters(const pcl::PointCloud<pcl::PointXYZ>::Ptr& lidar_cent
     // 获取当前系统时间
     auto now = std::chrono::system_clock::now();
     std::time_t now_time = std::chrono::system_clock::to_time_t(now);
-<<<<<<< HEAD
-    saveFile << "time: " << std::put_time(std::localtime(&now_time), "%Y-%m-%d %H:%M:%S") << std::endl;
-=======
     char buffer[80];
     std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", std::localtime(&now_time));
     saveFile << "time: " << buffer << std::endl;
->>>>>>> master
 
     saveFile << "lidar_centers:";
     for (const auto& pt : lidar_centers->points) {
@@ -771,41 +699,6 @@ void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transfo
   }
   std::string outputDir = params.output_path;
   if (outputDir.back() != '/') outputDir += '/';
-<<<<<<< HEAD
-
-  std::ofstream outFile(outputDir + "single_calib_result.txt");
-  if (outFile.is_open()) 
-  {
-    outFile << "# FAST-LIVO2 calibration format\n";
-    outFile << "cam_model: Pinhole\n";
-    outFile << "cam_width: " << img_input.cols << "\n";
-    outFile << "cam_height: " << img_input.rows << "\n";
-    outFile << "scale: 1.0\n";
-    outFile << "cam_fx: " << params.fx << "\n";
-    outFile << "cam_fy: " << params.fy << "\n";
-    outFile << "cam_cx: " << params.cx << "\n";
-    outFile << "cam_cy: " << params.cy << "\n";
-    outFile << "cam_d0: " << params.k1 << "\n";
-    outFile << "cam_d1: " << params.k2 << "\n";
-    outFile << "cam_d2: " << params.p1 << "\n";
-    outFile << "cam_d3: " << params.p2 << "\n";
-
-    outFile << "\nRcl: [" << std::fixed << std::setprecision(6);
-    outFile << std::setw(10) << transformation(0, 0) << ", " << std::setw(10) << transformation(0, 1) << ", " << std::setw(10) << transformation(0, 2) << ",\n";
-    outFile << "      " << std::setw(10) << transformation(1, 0) << ", " << std::setw(10) << transformation(1, 1) << ", " << std::setw(10) << transformation(1, 2) << ",\n";
-    outFile << "      " << std::setw(10) << transformation(2, 0) << ", " << std::setw(10) << transformation(2, 1) << ", " << std::setw(10) << transformation(2, 2) << "]\n";
-
-    outFile << "Pcl: [";
-    outFile << std::setw(10) << transformation(0, 3) << ", " << std::setw(10) << transformation(1, 3) << ", " << std::setw(10) << transformation(2, 3) << "]\n";
-
-    outFile.close();
-    std::cout << BOLDYELLOW << "[Result] Single-scene calibration results saved to " << BOLDWHITE << outputDir << "single_calib_result.txt" << RESET << std::endl;
-  } 
-  else
-  {
-    std::cerr << BOLDRED << "[Error] Failed to open single_calib_result.txt for writing!" << RESET << std::endl;
-  }
-=======
   
   // 确保输出目录存在
   system(("mkdir -p " + outputDir).c_str());
@@ -842,7 +735,6 @@ void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transfo
   // {
   //   std::cerr << BOLDRED << "[Error] Failed to open single_calib_result.txt for writing!" << RESET << std::endl;
   // }
->>>>>>> master
   
   if (pcl::io::savePCDFileASCII(outputDir + "colored_cloud.pcd", *colored_cloud) == 0) 
   {
@@ -853,11 +745,6 @@ void saveCalibrationResults(const Params& params, const Eigen::Matrix4f& transfo
     std::cerr << BOLDRED << "[Error] Failed to save colored point cloud to " << outputDir << "colored_cloud.pcd" << "!" << RESET << std::endl;
   }
  
-<<<<<<< HEAD
-  imwrite(outputDir + "qr_detect.png", img_input);
-}
-
-=======
   imwrite( "qr_detect.png", img_input);
 }
 
@@ -942,7 +829,6 @@ void sortPatternCentersGeometric(pcl::PointCloud<pcl::PointXYZ>::Ptr pc,
 
 
 
->>>>>>> master
 void sortPatternCenters(pcl::PointCloud<pcl::PointXYZ>::Ptr pc,
                         pcl::PointCloud<pcl::PointXYZ>::Ptr v,
                         const std::string& axis_mode = "camera") 
@@ -1112,14 +998,8 @@ class Square
  
       return true;
     }
-<<<<<<< HEAD
-};
-
-#endif
-=======
 
 
 };
 
 #endif
->>>>>>> master
