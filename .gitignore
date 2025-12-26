@@ -1,3 +1,31 @@
+<<<<<<< HEAD
 calib_data/*
 output/*
 build/*
+=======
+# 图像文件
+*.pcd
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.ico
+
+# 库文件
+*.a
+*.so
+*.dylib
+*.lib
+*.dll
+*.o
+*.obj
+*.pyc
+*.pyo
+*.pyd
+
+
+.history
+build/
+>>>>>>> master
