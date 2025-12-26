@@ -7,13 +7,12 @@ which is included as part of this source code package.
 
 #ifndef QR_DETECT_HPP
 #define QR_DETECT_HPP
-#include <cv_bridge/cv_bridge.h>
-#include <image_geometry/pinhole_camera_model.h>
-#include <message_filters/subscriber.h>
-#include <message_filters/time_synchronizer.h>
-#include <ros/ros.h>
+
+#include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
-#include "common_lib.h"
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include "common_lib.h"  // 包含通用定义
 
 class QRDetect 
 {
@@ -24,12 +23,11 @@ class QRDetect
     cv::Ptr<cv::aruco::Dictionary> dictionary_;
   
   public:
-    ros::Publisher qr_pub_;
     cv::Mat imageCopy_;
     cv::Mat cameraMatrix_;
     cv::Mat distCoeffs_;
 
-    QRDetect(ros::NodeHandle &nh, Params& params) 
+    QRDetect(Params& params) 
     {
       marker_size_ = params.marker_size;
       delta_width_qr_center_ = params.delta_width_qr_center;
@@ -44,55 +42,21 @@ class QRDetect
                                                 0,         0,        1);
                                                 
       // Initialize distortion coefficients
-      distCoeffs_ = (cv::Mat_<float>(1, 5) << params.k1, params.k2, params.p1, params.p2, 0);
+      distCoeffs_ = (cv::Mat_<float>(1, 8) << params.k1, params.k2, params.p1, params.p2, params.k3, params.k4, params.k5, params.k6);
 
       // Initialize QR dictionary
       dictionary_ = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
-
-      qr_pub_ = nh.advertise<sensor_msgs::PointCloud2>("qr_cloud", 1);
     }
 
-    Point2f projectPointDist(cv::Point3f pt_cv, const Mat intrinsics, const Mat distCoeffs) 
+    cv::Point2f projectPointDist(cv::Point3f pt_cv, const cv::Mat intrinsics, const cv::Mat distCoeffs) 
     {
       // Project a 3D point taking into account distortion
-      vector<Point3f> input{pt_cv};
-      vector<Point2f> projectedPoints;
-      projectedPoints.resize(1);  // TODO: Do it batched? (cv::circle is not batched anyway)
-      projectPoints(input, Mat::zeros(3, 1, CV_64FC1), Mat::zeros(3, 1, CV_64FC1),
+      std::vector<cv::Point3f> input{pt_cv};
+      std::vector<cv::Point2f> projectedPoints;
+      projectedPoints.resize(1);
+      cv::projectPoints(input, cv::Mat::zeros(3, 1, CV_64FC1), cv::Mat::zeros(3, 1, CV_64FC1),
       intrinsics, distCoeffs, projectedPoints);
       return projectedPoints[0];
-    }
-
-    void comb(int N, int K, std::vector<std::vector<int>> &groups) {
-      int upper_factorial = 1;
-      int lower_factorial = 1;
-
-      for (int i = 0; i < K; i++) {
-        upper_factorial *= (N - i);
-        lower_factorial *= (K - i);
-      }
-      int n_permutations = upper_factorial / lower_factorial;
-
-      if (DEBUG)
-        cout << N << " centers found. Iterating over " << n_permutations
-            << " possible sets of candidates" << endl;
-
-      std::string bitmask(K, 1);  // K leading 1's
-      bitmask.resize(N, 0);       // N-K trailing 0's
-
-      // print integers and permute bitmask
-      do {
-        std::vector<int> group;
-        for (int i = 0; i < N; ++i)  // [0..N-1] integers
-        {
-          if (bitmask[i]) {
-            group.push_back(i);
-          }
-        }
-        groups.push_back(group);
-      } while (std::prev_permutation(bitmask.begin(), bitmask.end()));
-
-      assert(groups.size() == n_permutations);
     }
 
     void detect_qr(cv::Mat &image, pcl::PointCloud<pcl::PointXYZ>::Ptr centers_cloud) 
@@ -169,15 +133,15 @@ class QRDetect
 
       cv::Vec3d rvec(0, 0, 0), tvec(0, 0, 0);  // Vectors to store initial guess
       
-      // cout << "min_detected_markers_: " << min_detected_markers_ << std::endl;
+      // std::cout << "min_detected_markers_: " << min_detected_markers_ << std::endl;
 
       // ids.size(): 4
       // Compute initial guess as average of individual markers poses
       if (ids.size() >= min_detected_markers_ && ids.size() <= TARGET_NUM_CIRCLES) 
       {
         // Estimate 3D position of the markers
-        vector<Vec3d> rvecs, tvecs;
-        Vec3f rvec_sin, rvec_cos;
+        std::vector<cv::Vec3d> rvecs, tvecs;
+        cv::Vec3f rvec_sin, rvec_cos;
         cv::aruco::estimatePoseSingleMarkers(corners, marker_size_, cameraMatrix_,
                                             distCoeffs_, rvecs, tvecs);
 
@@ -210,9 +174,8 @@ class QRDetect
         rvec[1] = atan2(rvec_sin[1], rvec_cos[1]);
         rvec[2] = atan2(rvec_sin[2], rvec_cos[2]);
 
-        // cout << "single: " <<  tvec[0] << ", "<< tvec[1] << ", " << tvec[2] << std::endl;
+        // std::cout << "single: " <<  tvec[0] << ", "<< tvec[1] << ", " << tvec[2] << std::endl;
 
-        // pcl::PointCloud<pcl::PointXYZ>::Ptr centers_cloud(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr candidates_cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
     // Estimate 3D position of the board using detected markers
@@ -225,7 +188,7 @@ class QRDetect
     #endif
 
 
-        // cout << "board: " <<  tvec[0] << ", "<< tvec[1] << ", " << tvec[2] << std::endl;
+        // std::cout << "board: " <<  tvec[0] << ", "<< tvec[1] << ", " << tvec[2] << std::endl;
 
         cv::aruco::drawAxis(imageCopy_, cameraMatrix_, distCoeffs_, rvec, tvec, 0.2);
 
@@ -242,7 +205,7 @@ class QRDetect
         R.copyTo(board_transform.rowRange(0, 3).colRange(0, 3));
         t.copyTo(board_transform.rowRange(0, 3).col(3));
 
-        // Compute coordintates of circle centers
+        // Compute coordinates of circle centers
         for (int i = 0; i < boardCircleCenters.size(); ++i) {
           cv::Mat mat = cv::Mat::zeros(4, 1, CV_32F);
           mat.at<float>(0, 0) = boardCircleCenters[i].x;
@@ -260,7 +223,7 @@ class QRDetect
           // Draw center (DEBUG)
           cv::Point2f uv;
           uv = projectPointDist(center3d, cameraMatrix_, distCoeffs_);
-          circle(imageCopy_, uv, 5, Scalar(0, 255, 0), -1);
+          circle(imageCopy_, uv, 5, cv::Scalar(0, 255, 0), -1);
 
           // Add center to list
           pcl::PointXYZ qr_center;
@@ -271,12 +234,6 @@ class QRDetect
         }
 
         /**
-          NOTE: This is included here in the same way as the rest of the modalities
-        to avoid obvious misdetections, which sometimes happened in our experiments.
-        In this modality, it should be impossible to have more than a set of
-        candidates, but we keep the ability of handling different combinations for
-        eventual future extensions.
-
           Geometric consistency check
           At this point, circles' center candidates have been computed
         (found_centers). Now we need to select the set of 4 candidates that best fit
@@ -289,7 +246,6 @@ class QRDetect
         std::vector<std::vector<int>> groups;
         comb(candidates_cloud->size(), TARGET_NUM_CIRCLES, groups);
         double groups_scores[groups.size()];  // -1: invalid; 0-1 normalized score
-        // groups.size() 1
 
         for (int i = 0; i < groups.size(); ++i) 
         {
@@ -303,7 +259,7 @@ class QRDetect
             candidates.push_back(center);
           }
 
-          // Compute candidates score
+          // Compute candidates score using Square class from common_lib.h
           Square square_candidate(candidates, delta_width_circles_,
                                   delta_height_circles_);
           groups_scores[i] = square_candidate.is_valid()
@@ -317,9 +273,8 @@ class QRDetect
         {
           if (best_candidate_score == 1 && groups_scores[i] == 1) {
             // Exit 4: Several candidates fit target's geometry
-            ROS_ERROR(
-                "[Mono] More than one set of candidates fit target's geometry. "
-                "Please, make sure your parameters are well set. Exiting callback");
+            std::cerr << RED << "[Mono] More than one set of candidates fit target's geometry. "
+                "Please, make sure your parameters are well set. Exiting callback" << RESET << std::endl;
             return;
           }
           if (groups_scores[i] > best_candidate_score) {
@@ -331,9 +286,8 @@ class QRDetect
         if (best_candidate_idx == -1) 
         {
           // Exit: No candidates fit target's geometry
-          ROS_WARN(
-              "[Mono] Unable to find a candidate set that matches target's "
-              "geometry");
+          std::cout << YELLOW << "[Mono] Unable to find a candidate set that matches target's "
+              "geometry" << RESET << std::endl;
           return;
         }
 
@@ -348,20 +302,19 @@ class QRDetect
             cv::Point3f pt_circle1(centers_cloud->at(i).x, centers_cloud->at(i).y,centers_cloud->at(i).z);
             cv::Point2f uv_circle1;
             uv_circle1 = projectPointDist(pt_circle1, cameraMatrix_, distCoeffs_);
-            circle(imageCopy_, uv_circle1, 2, Scalar(255, 0, 255), -1);
+            circle(imageCopy_, uv_circle1, 2, cv::Scalar(255, 0, 255), -1);
           }
         }
-
-        // Publish pointcloud messages
       } 
       else 
       {
         // Markers found != TARGET_NUM_CIRCLES
-        ROS_WARN("%lu marker(s) found, %d expected. Skipping frame...", ids.size(),
-                TARGET_NUM_CIRCLES);
+        std::cout << YELLOW << ids.size() << " marker(s) found, " << TARGET_NUM_CIRCLES 
+                  << " expected. Skipping frame..." << RESET << std::endl;
       }
     }
 };
+
 typedef std::shared_ptr<QRDetect> QRDetectPtr;
 
 #endif

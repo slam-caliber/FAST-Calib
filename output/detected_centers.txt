@@ -1,0 +1,8 @@
+# Detected circle centers from LiDAR
+# File: ./data/tongli/back_right/20251223_141835_049417-3.pcd
+# Timestamp: 1766714873607777596
+
+center_0: 3.542926 5.853013 0.735939
+center_1: 3.581175 6.350842 0.735118
+center_2: 3.567443 6.349045 0.322419
+center_3: 3.529379 5.850239 0.331142
