@@ -899,11 +899,8 @@ void sortPatternCenters(pcl::PointCloud<pcl::PointXYZ>::Ptr pc,
   }
 }
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> master
 class Square 
 {
   private:
